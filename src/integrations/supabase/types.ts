@@ -41,6 +41,125 @@ export type Database = {
         }
         Relationships: []
       }
+      properties: {
+        Row: {
+          address: string
+          area_sqft: number
+          built_up_area_sqft: number | null
+          city: string
+          construction_year: number | null
+          created_at: string
+          floor_count: number | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          pincode: string
+          property_name: string
+          property_type: Database["public"]["Enums"]["property_type"]
+          property_value: number
+          state: string
+          status: Database["public"]["Enums"]["property_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address: string
+          area_sqft: number
+          built_up_area_sqft?: number | null
+          city?: string
+          construction_year?: number | null
+          created_at?: string
+          floor_count?: number | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          pincode: string
+          property_name: string
+          property_type?: Database["public"]["Enums"]["property_type"]
+          property_value: number
+          state?: string
+          status?: Database["public"]["Enums"]["property_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string
+          area_sqft?: number
+          built_up_area_sqft?: number | null
+          city?: string
+          construction_year?: number | null
+          created_at?: string
+          floor_count?: number | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          pincode?: string
+          property_name?: string
+          property_type?: Database["public"]["Enums"]["property_type"]
+          property_value?: number
+          state?: string
+          status?: Database["public"]["Enums"]["property_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tax_calculations: {
+        Row: {
+          age_depreciation: number | null
+          ai_reasoning: string | null
+          base_tax: number
+          calculated_at: string
+          fiscal_year: string
+          id: string
+          location_factor: number | null
+          paid_at: string | null
+          payment_status: string | null
+          property_id: string
+          property_type_factor: number | null
+          total_tax: number
+          user_id: string
+        }
+        Insert: {
+          age_depreciation?: number | null
+          ai_reasoning?: string | null
+          base_tax: number
+          calculated_at?: string
+          fiscal_year: string
+          id?: string
+          location_factor?: number | null
+          paid_at?: string | null
+          payment_status?: string | null
+          property_id: string
+          property_type_factor?: number | null
+          total_tax: number
+          user_id: string
+        }
+        Update: {
+          age_depreciation?: number | null
+          ai_reasoning?: string | null
+          base_tax?: number
+          calculated_at?: string
+          fiscal_year?: string
+          id?: string
+          location_factor?: number | null
+          paid_at?: string | null
+          payment_status?: string | null
+          property_id?: string
+          property_type_factor?: number | null
+          total_tax?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_calculations_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -49,7 +168,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      property_status: "active" | "pending" | "disputed" | "exempt"
+      property_type:
+        | "residential"
+        | "commercial"
+        | "industrial"
+        | "agricultural"
+        | "mixed_use"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -176,6 +301,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      property_status: ["active", "pending", "disputed", "exempt"],
+      property_type: [
+        "residential",
+        "commercial",
+        "industrial",
+        "agricultural",
+        "mixed_use",
+      ],
+    },
   },
 } as const

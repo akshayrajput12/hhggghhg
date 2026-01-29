@@ -1,36 +1,40 @@
 import { useAuth } from "@/contexts/AuthContext";
+import { useProperties, useTaxCalculations } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useNavigate } from "react-router-dom";
-import { LogOut, Zap, LayoutDashboard, FileText, Settings, BarChart3 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate, Link } from "react-router-dom";
+import { LogOut, Zap, Home, BarChart3, MessageSquare, Receipt, Loader2 } from "lucide-react";
 import { useEffect } from "react";
-
-const quickActions = [
-  { icon: FileText, label: "Property Records", description: "Manage your property documents" },
-  { icon: BarChart3, label: "Tax Analytics", description: "View tax insights and reports" },
-  { icon: Settings, label: "Settings", description: "Configure your preferences" },
-];
+import StatsCards from "@/components/dashboard/StatsCards";
+import PropertyCard from "@/components/dashboard/PropertyCard";
+import AddPropertyDialog from "@/components/dashboard/AddPropertyDialog";
+import TaxHistoryCard from "@/components/dashboard/TaxHistoryCard";
+import AnalyticsCharts from "@/components/dashboard/AnalyticsCharts";
+import AIAssistant from "@/components/dashboard/AIAssistant";
 
 const Dashboard = () => {
-  const { user, signOut, loading } = useAuth();
+  const { user, signOut, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  
+  const { data: properties = [], isLoading: propertiesLoading } = useProperties();
+  const { data: taxCalculations = [], isLoading: taxLoading } = useTaxCalculations();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       navigate("/login");
     }
-  }, [user, loading, navigate]);
+  }, [user, authLoading, navigate]);
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
   };
 
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -45,17 +49,19 @@ const Dashboard = () => {
     .join("")
     .toUpperCase() || user.email?.[0].toUpperCase() || "U";
 
+  const isLoading = propertiesLoading || taxLoading;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-card border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-border">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary">
               <Zap className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-xl text-foreground">STMS Dashboard</span>
-          </div>
+            <span className="font-bold text-xl text-foreground">STMS</span>
+          </Link>
           
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
@@ -79,80 +85,143 @@ const Dashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-6">
         {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+        <div className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
             Welcome back, {user.user_metadata?.full_name?.split(" ")[0] || "User"}!
           </h1>
           <p className="text-muted-foreground">
-            Manage your property taxes efficiently with AI-powered insights.
+            Manage your property taxes with AI-powered insights
           </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-muted-foreground">Properties</span>
-                <LayoutDashboard className="w-4 h-4 text-primary" />
-              </div>
-              <p className="text-2xl font-bold text-foreground">0</p>
-              <p className="text-xs text-muted-foreground">No properties yet</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-muted-foreground">Pending Tax</span>
-                <FileText className="w-4 h-4 text-chart-2" />
-              </div>
-              <p className="text-2xl font-bold text-foreground">₹0</p>
-              <p className="text-xs text-muted-foreground">All clear!</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-muted-foreground">Documents</span>
-                <FileText className="w-4 h-4 text-chart-3" />
-              </div>
-              <p className="text-2xl font-bold text-foreground">0</p>
-              <p className="text-xs text-muted-foreground">Upload documents</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-muted-foreground">AI Queries</span>
-                <BarChart3 className="w-4 h-4 text-chart-4" />
-              </div>
-              <p className="text-2xl font-bold text-foreground">0</p>
-              <p className="text-xs text-muted-foreground">Start asking</p>
-            </CardContent>
-          </Card>
-        </div>
+        {isLoading ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-32 bg-card rounded-lg animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="mb-8">
+            <StatsCards properties={properties} taxCalculations={taxCalculations} />
+          </div>
+        )}
 
-        {/* Quick Actions */}
-        <h2 className="text-xl font-semibold text-foreground mb-4">Quick Actions</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {quickActions.map((action, index) => (
-            <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer group">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                    <action.icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">{action.label}</CardTitle>
-                    <CardDescription>{action.description}</CardDescription>
+        {/* Main Tabs */}
+        <Tabs defaultValue="properties" className="space-y-6">
+          <TabsList className="bg-card border border-border">
+            <TabsTrigger value="properties" className="gap-2">
+              <Home className="w-4 h-4" />
+              <span className="hidden sm:inline">Properties</span>
+            </TabsTrigger>
+            <TabsTrigger value="tax-history" className="gap-2">
+              <Receipt className="w-4 h-4" />
+              <span className="hidden sm:inline">Tax History</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-2">
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="assistant" className="gap-2">
+              <MessageSquare className="w-4 h-4" />
+              <span className="hidden sm:inline">AI Assistant</span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Properties Tab */}
+          <TabsContent value="properties" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-foreground">Your Properties</h2>
+              <AddPropertyDialog />
+            </div>
+            
+            {isLoading ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-64 bg-card rounded-lg animate-pulse" />
+                ))}
+              </div>
+            ) : properties.length === 0 ? (
+              <div className="text-center py-12 bg-card rounded-lg border border-border">
+                <Home className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-medium text-foreground mb-2">No Properties Yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Add your first property to start calculating taxes
+                </p>
+                <AddPropertyDialog />
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {properties.map((property) => (
+                  <PropertyCard key={property.id} property={property} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Tax History Tab */}
+          <TabsContent value="tax-history" className="space-y-6">
+            <h2 className="text-xl font-semibold text-foreground">Tax Calculations</h2>
+            
+            {isLoading ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-48 bg-card rounded-lg animate-pulse" />
+                ))}
+              </div>
+            ) : taxCalculations.length === 0 ? (
+              <div className="text-center py-12 bg-card rounded-lg border border-border">
+                <Receipt className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-medium text-foreground mb-2">No Tax Calculations</h3>
+                <p className="text-muted-foreground">
+                  Calculate tax on your properties to see history here
+                </p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {taxCalculations.map((calculation) => (
+                  <TaxHistoryCard key={calculation.id} calculation={calculation} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-6">
+            <h2 className="text-xl font-semibold text-foreground">Analytics & Insights</h2>
+            <AnalyticsCharts properties={properties} taxCalculations={taxCalculations} />
+          </TabsContent>
+
+          {/* AI Assistant Tab */}
+          <TabsContent value="assistant" className="space-y-6">
+            <h2 className="text-xl font-semibold text-foreground">AI Tax Assistant</h2>
+            <div className="grid lg:grid-cols-2 gap-6">
+              <AIAssistant properties={properties} taxCalculations={taxCalculations} />
+              <div className="space-y-4">
+                <div className="bg-card border border-border rounded-lg p-6">
+                  <h3 className="font-medium text-foreground mb-4">Quick Questions</h3>
+                  <div className="space-y-2">
+                    {[
+                      "What are the property tax exemptions in Rajasthan?",
+                      "How is property tax calculated using UAV method?",
+                      "What's the deadline for property tax payment?",
+                      "What rebates are available for senior citizens?",
+                    ].map((question, i) => (
+                      <button
+                        key={i}
+                        className="w-full text-left p-3 rounded-lg bg-muted/50 hover:bg-muted text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {question}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
