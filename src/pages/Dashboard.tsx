@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, Link } from "react-router-dom";
-import { LogOut, Zap, Home, BarChart3, MessageSquare, Receipt, Loader2 } from "lucide-react";
+import { LogOut, Zap, Home, BarChart3, MessageSquare, Receipt, Loader2, Calculator } from "lucide-react";
 import { useEffect } from "react";
 import StatsCards from "@/components/dashboard/StatsCards";
 import PropertyCard from "@/components/dashboard/PropertyCard";
 import AddPropertyDialog from "@/components/dashboard/AddPropertyDialog";
-import TaxHistoryCard from "@/components/dashboard/TaxHistoryCard";
-import AnalyticsCharts from "@/components/dashboard/AnalyticsCharts";
+import TaxBreakdownCard from "@/components/dashboard/TaxBreakdownCard";
+import TaxMethodCard from "@/components/dashboard/TaxMethodCard";
+import EnhancedAnalytics from "@/components/dashboard/EnhancedAnalytics";
 import AIAssistant from "@/components/dashboard/AIAssistant";
 
 const Dashboard = () => {
@@ -118,7 +119,11 @@ const Dashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="tax-history" className="gap-2">
               <Receipt className="w-4 h-4" />
-              <span className="hidden sm:inline">Tax History</span>
+              <span className="hidden sm:inline">Tax & Payments</span>
+            </TabsTrigger>
+            <TabsTrigger value="tax-method" className="gap-2">
+              <Calculator className="w-4 h-4" />
+              <span className="hidden sm:inline">UAV Method</span>
             </TabsTrigger>
             <TabsTrigger value="analytics" className="gap-2">
               <BarChart3 className="w-4 h-4" />
@@ -163,7 +168,12 @@ const Dashboard = () => {
 
           {/* Tax History Tab */}
           <TabsContent value="tax-history" className="space-y-6">
-            <h2 className="text-xl font-semibold text-foreground">Tax Calculations</h2>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">Tax Calculations & Payments</h2>
+                <p className="text-sm text-muted-foreground">View detailed tax breakdowns and pay online</p>
+              </div>
+            </div>
             
             {isLoading ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -181,17 +191,95 @@ const Dashboard = () => {
               </div>
             ) : (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {taxCalculations.map((calculation) => (
-                  <TaxHistoryCard key={calculation.id} calculation={calculation} />
-                ))}
+                {taxCalculations.map((calculation) => {
+                  const property = properties.find(p => p.id === calculation.property_id);
+                  return (
+                    <TaxBreakdownCard 
+                      key={calculation.id} 
+                      calculation={calculation} 
+                      property={property}
+                    />
+                  );
+                })}
               </div>
             )}
           </TabsContent>
 
+          {/* Tax Method Tab */}
+          <TabsContent value="tax-method" className="space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold text-foreground">Rajasthan Property Tax Method</h2>
+              <p className="text-sm text-muted-foreground">Understanding the Unit Area Value (UAV) calculation method</p>
+            </div>
+            <div className="grid lg:grid-cols-2 gap-6">
+              <TaxMethodCard />
+              <div className="space-y-4">
+                <div className="bg-card border border-border rounded-lg p-6">
+                  <h3 className="font-medium text-foreground mb-4 flex items-center gap-2">
+                    <Calculator className="w-4 h-4 text-primary" />
+                    Example Calculation
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-muted-foreground mb-1">Property Details</p>
+                      <p className="text-foreground">Residential • 1,000 sq.ft • Jaipur • Built 2015</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Base: 1,000 × ₹5</span>
+                        <span className="text-foreground font-medium">₹5,000</span>
+                      </div>
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>× Type Factor (Residential)</span>
+                        <span className="text-foreground font-medium">×1.0</span>
+                      </div>
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>× Location (Jaipur)</span>
+                        <span className="text-foreground font-medium">×1.2</span>
+                      </div>
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>- Age Depreciation (10 yrs)</span>
+                        <span className="text-green-600 font-medium">-10%</span>
+                      </div>
+                      <div className="border-t border-border pt-2 flex justify-between">
+                        <span className="font-medium text-foreground">Annual Tax</span>
+                        <span className="font-bold text-primary text-lg">₹5,400</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-card border border-border rounded-lg p-6">
+                  <h3 className="font-medium text-foreground mb-3">Key Points</h3>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      Tax is calculated annually based on property characteristics
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      Commercial properties have higher base rates than residential
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      Major cities like Jaipur have higher location factors
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      Older properties get depreciation benefits up to 20%
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
-            <h2 className="text-xl font-semibold text-foreground">Analytics & Insights</h2>
-            <AnalyticsCharts properties={properties} taxCalculations={taxCalculations} />
+            <div>
+              <h2 className="text-xl font-semibold text-foreground">Analytics & Insights</h2>
+              <p className="text-sm text-muted-foreground">Comprehensive analysis of your property portfolio</p>
+            </div>
+            <EnhancedAnalytics properties={properties} taxCalculations={taxCalculations} />
           </TabsContent>
 
           {/* AI Assistant Tab */}
